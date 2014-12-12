@@ -132,7 +132,7 @@ class ActiveRecord extends BaseActiveRecord
         }
 
         if (count($setArgs) > 1) {
-            $db->executeCommand('HMSET', $setArgs);
+            $db->executeCommand('HMSET', [ $key, $setArgs ]);
         }
 
         $changedAttributes = array_fill_keys(array_keys($values), null);

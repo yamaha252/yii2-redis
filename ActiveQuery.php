@@ -116,16 +116,8 @@ class ActiveQuery extends Component implements ActiveQueryInterface
     {
         // TODO add support for orderBy
         $data = $this->executeScript($db, 'All');
-        $rows = [];
-        foreach ($data as $dataRow) {
-            $row = [];
-            $c = count($dataRow);
-            for ($i = 0; $i < $c;) {
-                $row[$dataRow[$i++]] = $dataRow[$i++];
-            }
+        $rows = $this->parseList($data);
 
-            $rows[] = $row;
-        }
         if (!empty($rows)) {
             $models = $this->createModels($rows);
             if (!empty($this->with)) {
@@ -158,11 +150,8 @@ class ActiveQuery extends Component implements ActiveQueryInterface
         if (empty($data)) {
             return null;
         }
-        $row = [];
-        $c = count($data);
-        for ($i = 0; $i < $c;) {
-            $row[$data[$i++]] = $data[$i++];
-        }
+
+        $row = $this->parseRow($data);
         if ($this->asArray) {
             $model = $row;
         } else {
@@ -353,7 +342,7 @@ class ActiveQuery extends Component implements ActiveQueryInterface
         $method = 'build' . $type;
         $script = $db->getLuaScriptBuilder()->$method($this, $columnName);
 
-        return $db->executeCommand('EVAL', [$script, 0]);
+        return $db->executeCommand('EVAL', [$script]);
     }
 
     /**
@@ -481,5 +470,27 @@ class ActiveQuery extends Component implements ActiveQueryInterface
                 return $max;
         }
         throw new InvalidParamException('Unknown fetch type: ' . $type);
+    }
+
+    private function parseList($data) {
+        $result = [];
+        foreach ($data as $list) {
+            $rows = [];
+            $c = count($list);
+            for ($i = 0; $i < $c;) {
+                $rows[$list[$i++]] = $list[$i++];
+            }
+            $result[] = $this->parseRow($rows);
+        }
+        return $result;
+    }
+
+    private function parseRow($row) {
+        $result = [];
+        $c = count($row)-1;
+        for ($i = 1; $i < $c;) {
+            $result[$row[$i++]] = $row[$i++];
+        }
+        return $result;
     }
 }

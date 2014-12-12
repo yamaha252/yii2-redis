@@ -117,7 +117,7 @@ class Cache extends \yii\caching\Cache
      */
     protected function getValues($keys)
     {
-        $response = $this->redis->executeCommand('MGET', $keys);
+        $response = $this->redis->executeCommand('MGET', [$keys]);
         $result = [];
         $i = 0;
         foreach ($keys as $key) {
@@ -137,7 +137,7 @@ class Cache extends \yii\caching\Cache
         } else {
             $expire = (int) ($expire * 1000);
 
-            return (bool) $this->redis->executeCommand('SET', [$key, $value, 'PX', $expire]);
+            return (bool) $this->redis->executeCommand('SET', [$key, $value, $expire]);
         }
     }
 
@@ -154,11 +154,11 @@ class Cache extends \yii\caching\Cache
 
         $failedKeys = [];
         if ($expire == 0) {
-            $this->redis->executeCommand('MSET', $args);
+            $this->redis->executeCommand('MSET', [$args]);
         } else {
             $expire = (int) ($expire * 1000);
             $this->redis->executeCommand('MULTI');
-            $this->redis->executeCommand('MSET', $args);
+            $this->redis->executeCommand('MSET', [$args]);
             $index = [];
             foreach ($data as $key => $value) {
                 $this->redis->executeCommand('PEXPIRE', [$key, $expire]);
@@ -182,11 +182,11 @@ class Cache extends \yii\caching\Cache
     protected function addValue($key, $value, $expire)
     {
         if ($expire == 0) {
-            return (bool) $this->redis->executeCommand('SET', [$key, $value, 'NX']);
+            return (bool) $this->redis->executeCommand('SETNX', [$key, $value]);
         } else {
             $expire = (int) ($expire * 1000);
 
-            return (bool) $this->redis->executeCommand('SET', [$key, $value, 'PX', $expire, 'NX']);
+            return (bool) $this->redis->executeCommand('SETNX', [$key, $value, $expire]);
         }
     }
 
